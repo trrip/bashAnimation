@@ -1,0 +1,49 @@
+#!/bin/sh
+#Colors
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+GREEN='\033[0;32m'
+
+spinner(){   
+    local -r PID=$!
+    #echo $PID #debugging printing process id
+    while kill -0 $PID 2> /dev/null; do
+       chars=(" (O.O)"  " (-.-)" " (O.O)")       #animation array.
+        for i in "${chars[@]}"; do
+        sleep 0.25  #animation duration.
+        #echo -en "  " #only if u are not refreshing enough spaces and only spaces that are needed.
+        echo -en $"$i" "\r\r"  #printing the array.
+        done
+    done
+    printf "done      \n"
+}
+
+npm install  #checking and installing the node packages.
+#PHP linting report
+bash tests/hooks/phpLintTest.sh & spinner 
+wait $!
+RESULT1=$?
+# JSlisting
+bash tests/hooks/grunt_jshint.sh & spinner
+wait $!
+RESULT2=$?
+#Qunit test reports.
+bash tests/hooks/gruntQunitTask.sh & spinner
+wait $!
+RESULT3=$?
+# echo 
+# echo    #debugging printing now commented .
+# echo 
+if [ $RESULT1 -ne 0 ] 
+then
+    echo -e "${RED}Commit failed." && exit 1
+elif [ $RESULT2 -ne 0 ] 
+then
+    echo -e "${RED}Commit failed." && exit 1
+elif [ $RESULT3 -ne 0 ] 
+then
+    echo -e "${RED}Commit failed." && exit 1
+else 
+    echo -e "${GREEN}All test cases passed. Commit Passed. \n" && exit 0
+fi
+
